@@ -119,8 +119,24 @@ NAN_METHOD(FindCredentials) {
 
 NAN_METHOD(GetPasswordSync){
   std::string password,error;
-  KEYTAR_OP_RESULT result =keytar::GetPassword(*v8::String::Utf8Value(info[0]),
-                      *v8::String::Utf8Value(info[1]),&password,&error);
+
+  if (!info[0]->IsString()) {
+    Nan::ThrowTypeError("Parameter 'service' must be a string");
+    return;
+  }
+
+  Nan::Utf8String serviceNan(info[0]);
+  std::string service(*serviceNan, serviceNan.length());
+
+  if (!info[1]->IsString()) {
+    Nan::ThrowTypeError("Parameter 'username' must be a string");
+    return;
+  }
+
+  Nan::Utf8String usernameNan(info[1]);
+  std::string username(*usernameNan, usernameNan.length());
+
+  KEYTAR_OP_RESULT result =keytar::GetPassword(service, username, &password, &error);
   // if (result == keytar::FAIL_ERROR) {
   //   SetErrorMessage(error.c_str());
   // } else 
@@ -131,13 +147,13 @@ NAN_METHOD(GetPasswordSync){
   }
 }
 
-void Init(v8::Handle<v8::Object> exports) {
-  Nan::SetMethod(exports, "getPassword", GetPassword);
-  Nan::SetMethod(exports, "setPassword", SetPassword);
-  Nan::SetMethod(exports, "deletePassword", DeletePassword);
-  Nan::SetMethod(exports, "findPassword", FindPassword);
-  Nan::SetMethod(exports, "findCredentials", FindCredentials);
-  Nan::SetMethod(exports, "getPasswordSync",GetPasswordSync);
+NAN_MODULE_INIT(Init) {
+  Nan::SetMethod(target, "getPassword", GetPassword);
+  Nan::SetMethod(target, "setPassword", SetPassword);
+  Nan::SetMethod(target, "deletePassword", DeletePassword);
+  Nan::SetMethod(target, "findPassword", FindPassword);
+  Nan::SetMethod(target, "findCredentials", FindCredentials);
+  Nan::SetMethod(target, "getPasswordSync",GetPasswordSync);
 }
 
 }  // namespace
